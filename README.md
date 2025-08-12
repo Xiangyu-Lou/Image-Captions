@@ -25,7 +25,7 @@ A deep learning project that generates natural language descriptions for images.
                     │   LayerNorm (Trainable)     │
                     │           ▲                 │
                     │           │                 │
-                    │  Self-Attention (Frozen)   │
+                    │  Self-Attention (Frozen)    │
                     │           ▲                 │
                     │           │                 │
                     │   LayerNorm (Frozen)        │
@@ -38,10 +38,13 @@ A deep learning project that generates natural language descriptions for images.
                         (Word + Position)         │
                                ▲                  │
                                │                  │
-Input Text ────────────────────┘                 │
-                                                 │
-                          Visual Features        │
-                           [B, 257, 1024] ───────┘
+Input Text ────────────────────┘                  │
+                                                  │
+                           MLP(Trainable) ────────┘
+                                ▲
+                                │                 
+                          Visual Features
+                           [B, 257, 1024]
                                 ▲
                                 │
                             CLIP ViT-Large
@@ -67,8 +70,8 @@ The model combines two pre-trained components:
 - Key/Value: from CLIP visual features
 
 **Parameters**:
-- Total: 810.33 Million
-- Trainable: 353.82 Million (44%)
+- Total: 810.33 Million/811.38 Million
+- Trainable: 353.82 Million/354.87 Million
 - Frozen: CLIP encoder + GPT-2 self-attention
 - Trained: Cross-attention layers + Layer norms + MLP layers
 
@@ -108,7 +111,6 @@ python inference.py -f image.jpg --top_p 0.8 --temperature 1.5
 ```
 
 **Training:**
-Need at least 32GB GPU memory.
 ```bash
 python train.py
 ```
@@ -138,7 +140,6 @@ caption = generate_caption(model, 'image.jpg')
 - **Training Strategy**: Parameter-efficient fine-tuning with frozen backbone
 - **Generation**: Nucleus sampling (top-p) with temperature control
 - **Training Time**: ~0.5 hours/epoch on 5090
-- **Memory**: ~32GB GPU memory required
 - **Dataset**: COCO 2017 (118K training images, 5K validation images)
 
 ## File Structure

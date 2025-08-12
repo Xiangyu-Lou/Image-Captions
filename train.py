@@ -9,7 +9,7 @@ from PIL import Image
 import json
 import os
 import time
-from transformers.optimization import get_cosine_schedule_with_warmup
+# from transformers.optimization import get_cosine_schedule_with_warmup
 
 def create_collate_fn(tokenizer, processor):
     def collate_fn(batch):
@@ -61,13 +61,13 @@ def train(model, dataset, epochs=5, batch_size=16, lr=1e-4):
     )
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
-    total_steps   = len(train_dataloader) * epochs
-    warmup_steps  = int(0.05 * total_steps)
-    scheduler = get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=total_steps
-    )
+    # total_steps   = len(train_dataloader) * epochs
+    # warmup_steps  = int(0.05 * total_steps)
+    # scheduler = get_cosine_schedule_with_warmup(
+    #     optimizer,
+    #     num_warmup_steps=warmup_steps,
+    #     num_training_steps=total_steps
+    # )
     
     pad_token_id = model.tokenizer.pad_token_id if model.tokenizer.pad_token_id is not None else 50256
     criterion = nn.CrossEntropyLoss(ignore_index=pad_token_id)
@@ -88,22 +88,22 @@ def train(model, dataset, epochs=5, batch_size=16, lr=1e-4):
             loss = criterion(pred_logits.view(-1, model.tokenizer.vocab_size), target_labels.view(-1))
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            # scheduler.step()
             
             total_loss += loss.item()
-
-        eval_loss = evaluate(model, dataset)
+        
+        end_time = time.time()
         avg_loss = total_loss / len(train_dataloader)
+        print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f} Time: {(end_time-start_time)/60:.1f}mins")
+        torch.save(model.state_dict(), f'models/epoch{epoch+1}.pth')
+        print(f"Save model Successfully")
+        eval_loss = evaluate(model, dataset)
+
         log["all_train_loss"].append(avg_loss)
         log["all_eval_loss"].append(eval_loss)
         with open('models/log.json', 'w') as f:
             json.dump(log, f)
         
-        end_time = time.time()
-        print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f} Time: {(end_time-start_time)/60:.1f}mins")
-        torch.save(model.state_dict(), f'models/epoch{epoch+1}.pth')
-        print(f"Save model Successfully")
-
     print("\n---- Training Finished ----")
 
 def evaluate(model, dataset, batch_size=64):
@@ -144,5 +144,5 @@ def evaluate(model, dataset, batch_size=64):
 if __name__ =='__main__':
     dataset = loading_dataset()
     model = ImageCaptions()
-    # model.load_state_dict(torch.load('models/epoch1.pth'))
-    train(model, dataset, epochs=50, batch_size=64, lr=5e-6)
+    model.load_state_dict(torch.load('models/42.pth'))
+    train(model, dataset, epochs=3, batch_size=48, lr=1e-7)

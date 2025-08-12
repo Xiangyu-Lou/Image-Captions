@@ -120,7 +120,7 @@ class ImageCaptions(nn.Module):
 
         self.decoder = self._inject_cross_attention()
         
-        # self.fc_connect = nn.Linear(d_model, d_model)
+        self.fc_connect = nn.Linear(d_model, d_model)
         
         self.fc_head = nn.Linear(in_features=d_model, out_features=self.tokenizer.vocab_size)
         
@@ -138,8 +138,8 @@ class ImageCaptions(nn.Module):
         for param in self.parameters():
             param.requires_grad = False
             
-        # for param in self.fc_connect.parameters():
-        #     param.requires_grad = True
+        for param in self.fc_connect.parameters():
+            param.requires_grad = True
 
         for block in self.decoder.h:
             for param in block.ln_2.parameters():   # type: ignore
@@ -157,7 +157,7 @@ class ImageCaptions(nn.Module):
     def forward(self, image_pixel, decoder_input_ids, decoder_mask=None):
 
         encoder_output = self.pre_encoder(image_pixel).last_hidden_state
-        # encoder_stat = self.fc_connect(encoder_output)
+        encoder_output = self.fc_connect(encoder_output)
         
         input_embeds = self.pre_decoder.wte(decoder_input_ids)
         position_ids = torch.arange(0, decoder_input_ids.size(1), dtype=torch.long, device=decoder_input_ids.device)
